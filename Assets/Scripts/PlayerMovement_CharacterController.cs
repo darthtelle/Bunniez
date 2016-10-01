@@ -3,9 +3,12 @@ using System.Collections;
 
 public class PlayerMovement_CharacterController : MonoBehaviour 
 {
- 	public bool d_ControlJump = false;
-
+	private const float k_Gravity = 20.0f;
 	public float k_MaxSpeed = 5.0f;
+	public float k_JumpSpeed = 8.0f;
+
+	[SerializeField]
+	private GameObject m_BodyObject;
 
 	private CharacterController m_CharacterController;
 	private Vector3 m_MoveDirection;
@@ -14,35 +17,39 @@ public class PlayerMovement_CharacterController : MonoBehaviour
 	{
 		m_CharacterController = gameObject.GetComponent<CharacterController>();
 		m_MoveDirection = Vector3.zero;
+
+		if(m_BodyObject == null)
+		{
+			Debug.LogError("ERROR: Body object is null.");
+		}
 	}
 
 	private void Update()
 	{
 		float horizontal = Input.GetAxis("Horizontal");
-
-		if(d_ControlJump)
-		{
-			m_MoveDirection.x = horizontal * k_MaxSpeed;
-		}
+		m_MoveDirection.x = horizontal * k_MaxSpeed;
 
 		if(m_CharacterController.isGrounded)
 		{
-			if(d_ControlJump == false)
-			{
-				m_MoveDirection = new Vector3(horizontal, 0.0f, 0.0f);
-				m_MoveDirection = gameObject.transform.TransformDirection(m_MoveDirection);
-				m_MoveDirection *= k_MaxSpeed;
-			}
-
 			if(Input.GetButtonDown("Jump"))
 			{
-				m_MoveDirection.y = 8.0f;
+				m_MoveDirection.y = k_JumpSpeed;
 			}
 		}
 
-		m_MoveDirection.y -= 20.0f * Time.deltaTime;
+		m_MoveDirection.y -= k_Gravity * Time.deltaTime;
 		m_CharacterController.Move(m_MoveDirection * Time.deltaTime);
 
-		//m_CharacterController.SimpleMove(Vector3.right * horizontal * k_MaxSpeed);
+		Flip();
+	}
+
+	private void Flip()
+	{
+		if(((m_MoveDirection.x > 0.0f) && (m_BodyObject.transform.localScale.x < 0.0f)) || ((m_MoveDirection.x < 0.0f) && (m_BodyObject.transform.localScale.x > 0.0f)))
+		{
+			Vector3 scale = m_BodyObject.transform.localScale;
+			scale.x *= -1.0f;
+			m_BodyObject.transform.localScale = scale;
+		}
 	}
 }
